@@ -891,7 +891,7 @@ function pelanggaran() {
 /* ---------- Render soal ---------- */
 function render() {
   const q = SOAL[CUR];
-  $('qMeta').textContent = 'Soal ' + (CUR + 1) + ' dari ' + SOAL.length + ' · Bobot ' + q.bobot;
+  $('qMeta').textContent = 'Soal ' + (CUR + 1) + ' dari ' + SOAL.length;
   const sb = $('stimBox');
   if (q.stimulus) { sb.innerHTML = '<div class="eyebrow">Stimulus</div><div class="stim-text">' + rich(q.stimulus) + '</div>'; sb.classList.remove('hidden'); }
   else sb.classList.add('hidden');
@@ -1228,7 +1228,7 @@ function soalForm(mid, sid) {
     [0, 1, 2, 3].map(i => '<div class="op" id="qop' + i + '"' + (i >= n ? ' style="display:none"' : '') + '><label class="rk"><input type="radio" name="qk" value="' + 'ABCD'[i] + '"' + (s.kunci === 'ABCD'[i] ? ' checked' : '') + '><b>' + 'ABCD'[i] + '</b></label><input class="in s" id="qo' + i + '" value="' + esc(s.opsi[i] || '') + '" placeholder="Pilihan ' + 'ABCD'[i] + '"></div>').join('') +
     '<div class="row2"><button class="tb" type="button" onclick="$(\'qFile\').click()">🖼 Sisipkan gambar dari HP/komputer</button><input type="file" id="qFile" accept="image/*" class="hidden" onchange="unggahGambar(this)"></div><div id="qThumb"></div>' +
     '<p class="hl">Bulatan = kunci jawaban yang benar. Klik dulu kolom tempat gambar (bacaan, pertanyaan, atau salah satu pilihan), lalu tekan Sisipkan gambar. Gambar otomatis diperkecil. Alamat gambar dari internet juga bisa: tulis <b>[img:https://...]</b>.</p>' +
-    '<label class="fl">Bobot nilai</label><input class="in s" id="qBobot" type="number" min="0.1" step="0.1" value="' + s.bobot + '" style="max-width:140px">' +
+    '<p class="hl">Semua soal berbobot sama. Nilai = jumlah benar dibagi jumlah soal × 100.</p>' +
     '<div id="pnMsg" class="pm"></div><div class="row2"><button class="tb xls" onclick="soalSimpan(\'' + mid + '\',' + (sid || 'null') + ')">Simpan soal</button></div>', 'soalUI(\'' + mid + '\')');
 }
 function ubahJmlPilihan() {
@@ -1236,7 +1236,7 @@ function ubahJmlPilihan() {
   const k = document.querySelector('input[name=qk]:checked'); if (k && k.value === 'D' && n === 3) { const c = document.querySelector('input[name=qk][value=C]'); if (c) c.checked = true; }
 }
 async function soalSimpan(mid, sid) {
-  const k = document.querySelector('input[name=qk]:checked'), x = { stimulus: val('qStim'), soal: val('qSoal'), opsi: [0, 1, 2, 3].slice(0, +val('qN') || 4).map(i => val('qo' + i)), kunci: k ? k.value : '', bobot: val('qBobot') };
+  const k = document.querySelector('input[name=qk]:checked'), x = { stimulus: val('qStim'), soal: val('qSoal'), opsi: [0, 1, 2, 3].slice(0, +val('qN') || 4).map(i => val('qo' + i)), kunci: k ? k.value : '' };
   if (sid) x.id = sid;
   try { const r = await api('soal_simpan', { mapel: mid, soal: x }); if (!r.ok) return pesan(r.msg); SOALD = r.soal; await refreshMapel(); soalUI(mid); } catch (e) { pesan(e.message); }
 }
@@ -1250,7 +1250,7 @@ async function soalHapus(mid, id) {
    Teks: (bacaan, opsional; berlaku untuk soal-soal sesudahnya sampai ada "Teks:" lain atau "Teks:" kosong)
    1. Pertanyaan
    A. pilihan  B. pilihan  C. pilihan  D. pilihan
-   Kunci: B        (opsional: Bobot: 2) */
+   Kunci: B */
 function parseKunci(t) { const m = {}; String(t || '').replace(/(\d{1,3})\s*[.):=\-]?\s*([A-Da-d])\b/g, (_, n, k) => { m[+n] = k.toUpperCase(); return ''; }); return m; }
 function parseSoal(t, kunciTeks) {
   const out = [], gal = []; let cur = null, stim = '', mode = '';
@@ -1289,7 +1289,7 @@ function imporForm(mid) {
       '<div class="dzi">📄</div><b>Unggah berkas soal</b><span>Word (.docx), PDF, atau <b>foto kertas soal</b>. Teks &amp; gambar dibaca otomatis, lalu tinggal diperiksa.</span></label>' +
     '<input type="file" id="imFile" class="hidden" accept=".docx,.pdf,.txt,image/*" onchange="imporBerkas(this.files[0],\'' + mid + '\');this.value=\'\'">' +
     '<div id="imStatus" class="pm"></div>' +
-    '<details class="hl"><summary style="cursor:pointer;font-weight:600">Format yang dibaca &amp; contoh</summary><pre class="ct">1. Hasil dari 12 + 8 adalah ...\nA. 18\nB. 20\nC. 22\nD. 24\nKunci: B\n\nTeks: (bacaan bersama, boleh dikosongkan)\n2. Pertanyaan tentang bacaan ...\nA. ...\nB. ...\nC. ...\nD. ...\nKunci: A\nBobot: 2</pre>Nomor otomatis Word (1. dan A.) ikut terbaca. Jika kunci jawaban ada di daftar terpisah, isi kolom kunci di bawah.</details>' +
+    '<details class="hl"><summary style="cursor:pointer;font-weight:600">Format yang dibaca &amp; contoh</summary><pre class="ct">1. Hasil dari 12 + 8 adalah ...\nA. 18\nB. 20\nC. 22\nD. 24\nKunci: B\n\nTeks: (bacaan bersama, boleh dikosongkan)\n2. Pertanyaan tentang bacaan ...\nA. ...\nB. ...\nC. ...\nD. ...\nKunci: A\n</pre>Nomor otomatis Word (1. dan A.) ikut terbaca. Jika kunci jawaban ada di daftar terpisah, isi kolom kunci di bawah.</details>' +
     '<label class="fl">Isi soal (hasil baca berkas, atau tempel dan ketik sendiri)</label><textarea class="in s" id="imTeks" rows="10" placeholder="Hasil baca berkas muncul di sini. Boleh diperbaiki."></textarea>' +
     '<label class="fl">Kunci jawaban terpisah (opsional), contoh: 1.B 2.C 3.A</label><input class="in s" id="imKunci" placeholder="1.B 2.C 3.A ...">' +
     '<div class="row2"><button class="tb" onclick="imporPeriksa(\'' + mid + '\')">Periksa</button></div><div id="imHasil"></div><div id="pnMsg" class="pm"></div>', 'soalUI(\'' + mid + '\')');
