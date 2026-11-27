@@ -1,0 +1,26 @@
+name: Jaga Supabase tetap aktif
+
+on:
+  schedule:
+    - cron: '23 1,13 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Panggil Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then echo "Isi dulu SUPABASE_URL dan SUPABASE_KEY"; exit 1; fi
+          AUTH=()
+          case "$SUPABASE_KEY" in sb_*) ;; *) AUTH=(-H "Authorization: Bearer $SUPABASE_KEY");; esac
+          for i in 1 2 3; do
+            R=$(curl -sS --max-time 30 -X POST "${SUPABASE_URL%/}/rest/v1/rpc/api" \
+              -H "apikey: $SUPABASE_KEY" "${AUTH[@]}" -H "Content-Type: application/json" \
+              -d '{"p_action":"ping","p_data":{}}') && echo "$R" | grep -q '"ok": *true' && { echo "Berhasil: $R"; exit 0; }
+            echo "Percobaan $i gagal: $R"; sleep 20
+          done
+          exit 1
